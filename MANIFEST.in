@@ -1,1 +1,1 @@
-include README.md LICENSE.md
+include src/raven_formats/hashes.json
