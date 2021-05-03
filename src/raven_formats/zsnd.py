@@ -164,6 +164,13 @@ def rate2pitch(rate: int) -> int:
 def multipleOf(n: int, x: int) -> int:
     return math.ceil(n / x) * x
 
+def get_channels(sample_flags: int) -> int:
+    channels = 1
+            
+    if sample_flags & 2 != 0:
+        channels = 4 if (sample_flags & 32 != 0) else 2
+    return channels
+
 def read_zsnd(zsnd_path: Path, output_path: Path) -> dict:
     with zsnd_path.open(mode='rb') as zsnd_file:
         if (zsnd_file.read(4) != b'ZSND'):
@@ -250,10 +257,7 @@ def read_zsnd(zsnd_path: Path, output_path: Path) -> dict:
             zsnd_file.seek(sample_file[0])
             sample_file_size = sample_file[1]
             sample_rate = sample_data['sample_rate']
-            channels = 1
-            
-            if sample_flags & 2 != 0:
-                channels = 4 if (sample_flags & 32 != 0) else 2
+            channels = get_channels(sample_flags)
   
             with sample_file_path.open(mode='wb') as sample_file:
                 if is_psx and channels == 1:
@@ -331,6 +335,7 @@ def write_zsnd(data: dict, output_path: Path):
             sample_file_name = sample_file_path.stem.upper()
             sample_rate = sample['sample_rate']
             sample_flags = sample['flags'] if ('flags' in sample) else 0
+            channels = get_channels(sample_flags)
 
             sample_hashes.append((pjw_hash(f'CHARS3/7R/{zsnd_name}/{sample_file_name}'), sample_index))
             sample_file_hashes.append((pjw_hash(f'FILE/{zsnd_name}/{sample_file_name}'), sample_index))
@@ -343,10 +348,10 @@ def write_zsnd(data: dict, output_path: Path):
                 zsnd_file.write(pack(sample_format, sample_index, sample_flags, sample_rate))
 
             with sample_file_path.open(mode='rb') as sample_file:
-                if is_psx and sample_flags == 0:
+                if is_psx and channels == 1:
                     sample_file.seek(vag_header_size)
                 
-                if platform == 'PC' and sample_flags == 0:
+                if platform == 'PC' and channels == 1:
                     with wave.open(sample_file, 'rb') as wav_file:
                         sample_file_data = wav_file.readframes(wav_file.getnframes())
 
