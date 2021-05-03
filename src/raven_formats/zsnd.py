@@ -140,7 +140,7 @@ def hash2str(sound_hash: int):
     key = str(sound_hash)
 
     if not hash_strings:
-        with open_text('raven_formats', 'hashes.json') as hashes_file:
+        with open_text('raven_formats.data', 'zsnd_hashes.json') as hashes_file:
             hash_strings = json.load(hashes_file)
     return hash_strings[key] if (key in hash_strings) else sound_hash
     
@@ -250,14 +250,18 @@ def read_zsnd(zsnd_path: Path, output_path: Path) -> dict:
             zsnd_file.seek(sample_file[0])
             sample_file_size = sample_file[1]
             sample_rate = sample_data['sample_rate']
+            channels = 1
+            
+            if sample_flags & 2 != 0:
+                channels = 4 if (sample_flags & 32 != 0) else 2
   
             with sample_file_path.open(mode='wb') as sample_file:
-                if is_psx and sample_flags == 0:
+                if is_psx and channels == 1:
                     sample_file.write(pack(vag_header_fmt, b'VAGp', 0x20, sample_file_size, sample_rate, sample_file_path.stem.encode('utf-8')))
 
                 sample_file_data = zsnd_file.read(sample_file_size)
 
-                if platform == 'PC' and sample_flags == 0:
+                if platform == 'PC' and channels == 1:
                     with wave.open(sample_file, 'wb') as wav_file:
                         wav_file.setnchannels(1)
                         wav_file.setsampwidth(2)

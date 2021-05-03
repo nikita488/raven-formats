@@ -1,1 +1,1 @@
-include src/raven_formats/hashes.json
+include src/raven_formats/data/zsnd_hashes.json
