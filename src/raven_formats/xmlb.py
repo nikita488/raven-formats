@@ -220,7 +220,7 @@ def main():
     parser.add_argument('input', help='input file (supports glob)')
     parser.add_argument('output', help='output file (wildcards will be replaced by input file name)')
     args = parser.parse_args()
-    input_files = glob.glob(args.input, recursive=True)
+    input_files = glob.glob(glob.escape(args.input), recursive=True)
 
     if not input_files:
         raise ValueError('No files found')
