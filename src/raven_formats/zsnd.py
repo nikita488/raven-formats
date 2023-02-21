@@ -403,11 +403,11 @@ def write_zsnd(data: dict, output_path: Path):
         zsnd_file.write(pack(zsnd_size_big_fmt if (is_big_endian(platform)) else zsnd_size_fmt, size))
 
 def decompile(zsnd_path: Path, output_path: Path):
-    with output_path.open(mode='w') as json_file:
+    with output_path.open(mode='w', encoding='utf-8') as json_file:
         json.dump(read_zsnd(zsnd_path, output_path), json_file, indent=4)
 
 def compile(json_path: Path, output_path: Path):
-    with json_path.open(mode='r') as json_file:
+    with json_path.open(mode='r', encoding='utf-8') as json_file:
         write_zsnd(json.load(json_file), output_path)
 
 def main():
@@ -416,7 +416,7 @@ def main():
     parser.add_argument('input', help='input file (supports glob)')
     parser.add_argument('output', help='output file (wildcards will be replaced by input file name)')
     args = parser.parse_args()
-    input_files = glob.glob(args.input, recursive=True)
+    input_files = glob.glob(glob.escape(args.input), recursive=True)
 
     if not input_files:
         raise ValueError('No files found')
@@ -424,6 +424,7 @@ def main():
     for input_file in input_files:
         input_file = Path(input_file)
         output_file = Path(args.output.replace('*', input_file.stem))
+        output_file.parent.mkdir(parents=True, exist_ok=True)
 
         if args.decompile:
             decompile(input_file, output_file)
