@@ -114,6 +114,10 @@ def to_json_element(element: ET.Element) -> tuple[str, FakeDict]:
 def decompile(xmlb_path: Path, output_path: Path, has_indent: bool):
     root_element = read_xmlb(xmlb_path)
 
+    to_xml_json(root_element, output_path, has_indent)
+
+def to_xml_json(root_element: ET.Element, output_path: Path, has_indent: bool):
+
     if output_path.suffix == '.xml':
         if has_indent:
             indent(root_element)
@@ -198,23 +202,97 @@ def from_json_element(element: tuple) -> ET.Element:
 
     return xml_element
 
-def compile(input_path: Path, output_path: Path):
-    if input_path.suffix == '.xml':
-        write_xmlb(ET.parse(input_path).getroot(), output_path)
-    elif input_path.suffix == '.json':
-        with input_path.open(mode='r', encoding='utf-8') as json_file:
-            data = json.load(json_file, object_pairs_hook=parse_json_object_pairs)
+# function to process new lines from converter by BaconWizard17
+def convert_escape(old_line):
+    new_line = old_line.replace('\\', '\\\\')
+    new_line = new_line.replace('"', '\\"')
+    new_line = '"' + new_line
+    return new_line
+
+# NBA2kStuff's format to JSON converter by BaconWizard17
+def from_xml_json(file) -> str:
+    lines_output = []
+    indent = 8
+    for line in file:
+        # format B does not have blank lines, so they can be skipped
+        if line.isspace() == False:
+
+            # leading (indent) and trailing spaces can be removed
+            working_line = line.strip()
+
+            # begin performing conversion
+            if (working_line[0:4] == 'XMLB') and (working_line[-1] == '{'):
+                # this is for the header
+                lines_output.append('{')
+                lines_output.append((' ' * 4) + '"' + working_line[4:-1].strip() + '": {')
+            elif working_line == '}':
+                # this deals with lines that are closing brackets. Their indent is less than the previous line
+                indent -= 4
+                # previous line does not need to end in a comma
+                lines_output[-1] = lines_output[-1].strip(',')
+                lines_output.append((' ' * indent) + '},')
+            elif working_line[-1] == '{':
+                # this deals with lines with open brackets. They increase the indent
+                working_line = convert_escape(working_line)
+                lines_output.append((' ' * indent) + working_line[:-1].strip() + '": {')
+                indent += 4
+            else:
+                working_line = convert_escape(working_line)
+                working_line = working_line.replace(' = ', '": "', 1)
+                if working_line[-1] == ';': working_line = working_line[:-1].strip()
+                lines_output.append((' ' * indent) + working_line + '",')
+
+    # if a full file is being converted, need to add an extra bracket because header is now 2 lines (+ remove previous comma)
+    if lines_output[0] == '{':
+        lines_output[-1] = lines_output[-1].strip(',')
+        lines_output.append('}')
+
+    jstring = '\n'.join(lines_output)
+
+    return jstring
+
+def from_any_element(input_path: Path) -> ET.Element:
+    # utf-8-sig should remove the BOM if present.
+    with input_path.open(mode='r', encoding='utf-8-sig') as input_file:
+        pos = input_file.tell()
+        first_char = input_file.read(1)
+        input_file.seek(pos)
+        if first_char == '<':
+            return ET.fromstring(input_file.read())
+        else:
+            data = ''
+            if first_char == '{':
+                data = json.load(input_file, object_pairs_hook=parse_json_object_pairs)
+            else:
+                # assuming it's NBA2kStuff's format
+                json_data = from_xml_json(input_file)
+                try:
+                    data = json.loads(json_data, object_pairs_hook=parse_json_object_pairs)
+                except:
+                    # Give the user the json data, if there was an error.
+                    path_json = input_path.with_suffix('.json')
+                    with path_json.open(mode='w') as file_json:
+                        file_json.write(json_data)
+                    raise
+
             root_amount = len(data)
 
             if root_amount != 1:
                 raise ValueError(f'Found {root_amount} root elements. Required 1')
 
-            write_xmlb(from_json_element(data[0]), output_path)
-    else:
-        raise ValueError(f'Input file extension {input_path.suffix} is not supported. Supported: .xml, .json')
+            return from_json_element(data[0])
+
+def compile(input_path: Path, output_path: Path):
+    element = from_any_element(input_path)
+    write_xmlb(element, output_path)
+
+def convert(input_path: Path, output_path: Path, has_indent: bool):
+    element = from_any_element(input_path)
+    to_xml_json(element, output_path, has_indent)
 
 def main():
     parser = ArgumentParser()
+    parser.add_argument('-c', '--convert', action='store_true', help='convert decompiled input file to XML/JSON file')
     parser.add_argument('-d', '--decompile', action='store_true', help='decompile input XMLB file to XML/JSON file')
     parser.add_argument('--no_indent', action='store_true', help='disable indent in decompiled XML/JSON file')
     parser.add_argument('input', help='input file (supports glob)')
@@ -232,6 +310,8 @@ def main():
 
         if args.decompile:
             decompile(input_file, output_file, not args.no_indent)
+        elif args.convert:
+            convert(input_file, output_file, not args.no_indent)
         else:
             compile(input_file, output_file)
 
