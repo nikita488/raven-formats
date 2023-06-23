@@ -5,7 +5,7 @@ Tools to work with formats used by **Raven Software** in **MUA/XML2** games.
 ## Usage
 #### XMLB Compile/Decompile
 ```
-usage: xmlb.py [-h] [-d] [--no_indent] input output
+usage: xmlb.py [-h] [-c] [-d] [--no_indent] input output
 
 positional arguments:
   input            input file (supports glob)
@@ -13,6 +13,7 @@ positional arguments:
 
 optional arguments:
   -h, --help       show this help message and exit
+  -c, --convert    convert decompiled input file to XML/JSON file
   -d, --decompile  decompile input XMLB file to XML/JSON file
   --no_indent      disable indent in decompiled XML/JSON file
 ```
