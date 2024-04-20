@@ -28,3 +28,16 @@ optional arguments:
   -h, --help       show this help message and exit
   -d, --decompile  decompile input ZSND file to JSON file
 ```
+
+#### FB Compile/Decompile
+```
+usage: fb.py [-h] [-d] input output
+
+positional arguments:
+  input            input file (supports glob)
+  output           output file (wildcards will be replaced by input file name)
+
+optional arguments:
+  -h, --help       show this help message and exit
+  -d, --decompile  decompile input FB file to JSON file
+```
