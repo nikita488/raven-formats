@@ -31,7 +31,7 @@ optional arguments:
 
 #### FB Compile/Decompile
 ```
-usage: fb.py [-h] [-d] input output
+usage: fb.py [-h] [-d] [-r] input output
 
 positional arguments:
   input            input file (supports glob)
@@ -40,4 +40,5 @@ positional arguments:
 optional arguments:
   -h, --help       show this help message and exit
   -d, --decompile  decompile input FB file to JSON file
+  -r, --rebuild    compile to FB file, including all files that exist in the corresponding directory
 ```
