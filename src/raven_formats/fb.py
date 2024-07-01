@@ -50,23 +50,6 @@ Known_Formats = {
     '.sdf': 'sdf'
 }
 
-#This is a duplicate of xmlb - it should probably be a separate file to import
-#http://effbot.org/zone/element-lib.htm#prettyprint
-def indent(elem, level=0):
-    i = "\n" + level*"    "
-    if len(elem):
-        if not elem.text or not elem.text.strip():
-            elem.text = i + "    "
-        if not elem.tail or not elem.tail.strip():
-            elem.tail = i
-        for elem in elem:
-            indent(elem, level+1)
-        if not elem.tail or not elem.tail.strip():
-            elem.tail = i
-    else:
-        if level and (not elem.tail or not elem.tail.strip()):
-            elem.tail = i
-
 def decompile(fb_path: Path, output_path: Path):
     fb_data = fb_path.read_bytes()
 
@@ -86,7 +69,7 @@ def decompile(fb_path: Path, output_path: Path):
             file_path.parent.mkdir(parents=True, exist_ok=True)
             file_path.write_bytes(file_data)
 
-        indent(entries)
+        ET.indent(entries, ' ' * 4)
         ET.ElementTree(entries).write(output_path, encoding='utf-8')
 
 def compile(xml_path: Path, output_path: Path):
