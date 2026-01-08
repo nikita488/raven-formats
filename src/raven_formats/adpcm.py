@@ -71,7 +71,7 @@ def encode_sample(sample: int, state: tuple) -> tuple:
 
     return encoded_sample, (predicted_sample, step_index)
 
-import wave, struct, time
+from struct import pack
 
 def decode(samples: bytes) -> bytearray:
     samples = memoryview(samples).cast('B')
@@ -80,9 +80,9 @@ def decode(samples: bytes) -> bytearray:
 
     for sample in samples:
         state = decode_sample(sample & 0xF, state)
-        decoded_samples += struct.pack('<h', state[0])
+        decoded_samples += pack('<h', state[0])
         state = decode_sample((sample >> 4) & 0xF, state)
-        decoded_samples += struct.pack('<h', state[0])
+        decoded_samples += pack('<h', state[0])
     return decoded_samples
 
 def encode(samples: bytes) -> bytearray:
